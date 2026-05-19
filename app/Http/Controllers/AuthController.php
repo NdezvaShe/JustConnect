@@ -247,14 +247,7 @@ class AuthController extends Controller
 
     protected function sendOtpMail(string $email, string $otp): void
     {
-        $defaultMailer = config('mail.default');
-        $transport = config("mail.mailers.{$defaultMailer}.transport");
-
-        if (in_array($defaultMailer, ['array', 'log'], true) || in_array($transport, ['array', 'log'], true)) {
-            throw new RuntimeException('Email delivery is not configured.');
-        }
-
-        Mail::to($email)->send(new OtpMail($otp));
+        Mail::mailer($this->otpMailer())->to($email)->send(new OtpMail($otp));
     }
 
     protected function otpDeliveryErrorMessage(Throwable $e): string
@@ -264,6 +257,35 @@ class AuthController extends Controller
         }
 
         return 'We could not send the verification code right now. Please try again shortly.';
+    }
+
+    private function otpMailer(): string
+    {
+        $defaultMailer = config('mail.default');
+        $transport = config("mail.mailers.{$defaultMailer}.transport");
+
+        if (! in_array($defaultMailer, ['array', 'log'], true) && ! in_array($transport, ['array', 'log'], true)) {
+            return $defaultMailer;
+        }
+
+        if ($this->hasUsableSmtpConfig()) {
+            return 'smtp';
+        }
+
+        throw new RuntimeException('Email delivery is not configured.');
+    }
+
+    private function hasUsableSmtpConfig(): bool
+    {
+        $smtp = config('mail.mailers.smtp', []);
+        $host = strtolower(trim((string) ($smtp['host'] ?? '')));
+
+        return ($smtp['transport'] ?? null) === 'smtp'
+            && $host !== ''
+            && ! in_array($host, ['127.0.0.1', 'localhost'], true)
+            && trim((string) ($smtp['port'] ?? '')) !== ''
+            && trim((string) ($smtp['username'] ?? '')) !== ''
+            && trim((string) ($smtp['password'] ?? '')) !== '';
     }
 
     private function createVerifiedUser(array $data): User
