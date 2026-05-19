@@ -29,5 +29,7 @@ return [
         ],
     ],
 
+    'require_registration_email_verification' => env('REQUIRE_REGISTRATION_EMAIL_VERIFICATION', true),
+
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 ];

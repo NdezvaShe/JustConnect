@@ -167,6 +167,19 @@ class AuthController extends Controller
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()],
         ]);
 
+        if (! config('auth.require_registration_email_verification')) {
+            $user = $this->createVerifiedUser($data);
+
+            Auth::login($user);
+            $request->session()->regenerate();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account created.',
+                'redirect' => route('dashboard'),
+            ]);
+        }
+
         $otp = (string) random_int(100000, 999999);
         Cache::put('otp_' . $data['email'], $otp, now()->addMinutes(10));
         Cache::put('pending_user_' . $data['email'], $data, now()->addMinutes(15));
@@ -212,14 +225,7 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'Registration session expired.'], 422);
         }
 
-        $user = User::create([
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'],
-            'role' => $data['role'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'email_verified_at' => now(),
-        ]);
+        $user = $this->createVerifiedUser($data);
 
         Cache::forget('otp_' . $request->email);
         Cache::forget('pending_user_' . $request->email);
@@ -258,6 +264,18 @@ class AuthController extends Controller
         }
 
         return 'We could not send the verification code right now. Please try again shortly.';
+    }
+
+    private function createVerifiedUser(array $data): User
+    {
+        return User::create([
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'role' => $data['role'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'email_verified_at' => now(),
+        ]);
     }
 
     private function normaliseSecurityAnswer(string $answer): string

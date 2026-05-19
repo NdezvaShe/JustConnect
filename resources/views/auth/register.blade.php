@@ -336,6 +336,12 @@ async function handleSignup() {
       return;
     }
 
+    if (data.redirect) {
+      toast(data.message || 'Account created! Redirecting...', 'success', 3000);
+      setTimeout(() => window.location.href = data.redirect, 1000);
+      return;
+    }
+
     pendingEmail = emailInput.value.trim();
     otpSent = true;
     document.getElementById('otpEmailDisplay').textContent = pendingEmail;
