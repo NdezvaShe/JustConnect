@@ -1810,7 +1810,7 @@ function renderRecords(list) {
   }
   el.innerHTML = `<table class="rec-table"><thead><tr><th>Document</th><th>Type</th><th>Date</th><th>Actions</th></tr></thead><tbody>
   ${list.map(s => `<tr>
-    <td><strong>${esc(s.document_name || '—')}</strong>${s.word_count ? `<div style="font-size:11px;color:var(--grey-400)">${s.word_count.toLocaleString()} words</div>` : ''}</td>
+    <td><strong>${esc(s.document_name || '—')}</strong></td>
     <td><span class="type-badge ${catBadge(s.document_type)}">${esc(s.document_type || 'Unknown')}</span></td>
     <td>${s.created_at || '—'}</td>
     <td>
@@ -2029,12 +2029,7 @@ function renderRecords(list) {
 
   el.innerHTML = `<table class="rec-table"><thead><tr><th>Document</th><th>Type</th><th>Date</th><th>Actions</th></tr></thead><tbody>
   ${list.map(s => `<tr>
-    <td>
-      <strong>${esc(s.document_name || '—')}</strong>
-      ${s.word_count ? `<div style="font-size:11px;color:var(--grey-400)">${s.word_count.toLocaleString()} words</div>` : ''}
-      ${Array.isArray(s.structured_panels?.key_legal_issues) && s.structured_panels.key_legal_issues.length ? `<div class="record-issue-cloud">${s.structured_panels.key_legal_issues.slice(0,3).map(issue => `<span class="law-chip">${esc(issue)}</span>`).join('')}</div>` : ''}
-      ${s.search_score ? `<div class="record-score">Semantic match ${(s.search_score * 100).toFixed(0)}%</div>` : ''}
-    </td>
+    <td><strong>${esc(s.document_name || '—')}</strong></td>
     <td><span class="type-badge ${catBadge(s.document_type)}">${esc(s.document_type || 'Unknown')}</span></td>
     <td>${s.created_at || '—'}${s.court ? `<div style="font-size:11px;color:var(--grey-400);margin-top:6px">${esc(s.court)}</div>` : ''}</td>
     <td>
