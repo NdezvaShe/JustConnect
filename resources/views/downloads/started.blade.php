@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Download Started - JustConnect</title>
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 <style>
 body{min-height:100vh;margin:0;display:grid;place-items:center;background:#f7f8f5;font-family:'DM Sans',Arial,sans-serif;color:#1f2f25}

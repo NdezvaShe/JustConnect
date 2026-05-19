@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Verify Sign In - JustConnect</title>
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 <style>
 body{min-height:100vh;display:grid;place-items:center;background:#f7f8f5;font-family:'DM Sans',Arial,sans-serif}
