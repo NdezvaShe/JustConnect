@@ -4,7 +4,11 @@ set -eu
 : "${PORT:=8000}"
 : "${APP_ENV:=production}"
 : "${APP_DEBUG:=false}"
-: "${APP_URL:=http://127.0.0.1:${PORT}}"
+if [ -z "${APP_URL:-}" ] && [ -n "${KOYEB_PUBLIC_DOMAIN:-}" ]; then
+    APP_URL="https://${KOYEB_PUBLIC_DOMAIN}"
+else
+    : "${APP_URL:=http://127.0.0.1:${PORT}}"
+fi
 : "${DB_CONNECTION:=pgsql}"
 : "${SESSION_DRIVER:=database}"
 : "${CACHE_STORE:=database}"
