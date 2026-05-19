@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "echo \"Vercel proxy deployment: Laravel runs on Render\"",
+  "outputDirectory": "vercel-public",
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "destination": "https://justconnect-api.onrender.com/:path*"
+    }
+  ]
+}
