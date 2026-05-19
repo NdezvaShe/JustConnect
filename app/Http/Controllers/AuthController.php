@@ -253,7 +253,7 @@ class AuthController extends Controller
     protected function otpDeliveryErrorMessage(Throwable $e): string
     {
         if ($e instanceof RuntimeException) {
-            return 'Email delivery is not configured yet. Update MAIL_MAILER and SMTP settings in your .env file.';
+            return $e->getMessage();
         }
 
         return 'We could not send the verification code right now. Please try again shortly.';
@@ -272,20 +272,41 @@ class AuthController extends Controller
             return 'smtp';
         }
 
-        throw new RuntimeException('Email delivery is not configured.');
+        throw new RuntimeException($this->mailConfigurationProblem());
     }
 
     private function hasUsableSmtpConfig(): bool
     {
+        return $this->mailConfigurationProblem() === null;
+    }
+
+    private function mailConfigurationProblem(): ?string
+    {
         $smtp = config('mail.mailers.smtp', []);
+        $missing = [];
         $host = strtolower(trim((string) ($smtp['host'] ?? '')));
 
-        return ($smtp['transport'] ?? null) === 'smtp'
-            && $host !== ''
-            && ! in_array($host, ['127.0.0.1', 'localhost'], true)
-            && trim((string) ($smtp['port'] ?? '')) !== ''
-            && trim((string) ($smtp['username'] ?? '')) !== ''
-            && trim((string) ($smtp['password'] ?? '')) !== '';
+        if ($host === '' || in_array($host, ['127.0.0.1', 'localhost'], true)) {
+            $missing[] = 'MAIL_HOST';
+        }
+
+        if (trim((string) ($smtp['port'] ?? '')) === '') {
+            $missing[] = 'MAIL_PORT';
+        }
+
+        if (trim((string) ($smtp['username'] ?? '')) === '') {
+            $missing[] = 'MAIL_USERNAME';
+        }
+
+        if (trim((string) ($smtp['password'] ?? '')) === '') {
+            $missing[] = 'MAIL_PASSWORD';
+        }
+
+        if ($missing) {
+            return 'Email delivery is not configured. Missing or invalid: ' . implode(', ', $missing) . '.';
+        }
+
+        return null;
     }
 
     private function createVerifiedUser(array $data): User
