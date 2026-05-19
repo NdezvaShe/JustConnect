@@ -30,6 +30,7 @@ return [
     ],
 
     'require_registration_email_verification' => env('REQUIRE_REGISTRATION_EMAIL_VERIFICATION', true),
+    'otp_mailer' => env('OTP_MAILER', env('MAIL_MAILER', 'log')),
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 ];

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -247,6 +248,12 @@ class AuthController extends Controller
 
     protected function sendOtpMail(string $email, string $otp): void
     {
+        if ($this->usesResendOtpMailer()) {
+            $this->sendOtpViaResend($email, $otp);
+
+            return;
+        }
+
         Mail::mailer($this->otpMailer())->to($email)->send(new OtpMail($otp));
     }
 
@@ -257,6 +264,70 @@ class AuthController extends Controller
         }
 
         return 'We could not send the verification code right now. Please try again shortly.';
+    }
+
+    private function usesResendOtpMailer(): bool
+    {
+        return in_array(strtolower((string) config('auth.otp_mailer')), ['resend', 'resend_api'], true);
+    }
+
+    private function sendOtpViaResend(string $email, string $otp): void
+    {
+        $key = trim((string) config('services.resend.key'));
+
+        if ($key === '') {
+            throw new RuntimeException('Email delivery is not configured. Missing RESEND_API_KEY or RESEND_KEY.');
+        }
+
+        $fromAddress = trim((string) config('mail.from.address'));
+        $fromName = trim((string) config('mail.from.name'));
+
+        if ($fromAddress === '' || $fromAddress === 'hello@example.com') {
+            throw new RuntimeException('Email delivery is not configured. Missing MAIL_FROM_ADDRESS.');
+        }
+
+        $from = $fromName === '' ? $fromAddress : "{$fromName} <{$fromAddress}>";
+        $html = view('emails.otp', ['otp' => $otp])->render();
+
+        try {
+            $response = Http::timeout(20)
+                ->withToken($key)
+                ->acceptJson()
+                ->asJson()
+                ->post('https://api.resend.com/emails', [
+                    'from' => $from,
+                    'to' => [$email],
+                    'subject' => 'Your JustConnect verification code',
+                    'html' => $html,
+                    'text' => "Your JustConnect verification code is {$otp}. It expires in 10 minutes.",
+                ]);
+        } catch (Throwable $e) {
+            throw new RuntimeException('Resend email API could not be reached. ' . $e->getMessage(), 0, $e);
+        }
+
+        if ($response->successful()) {
+            return;
+        }
+
+        $message = $response->json('message') ?: $response->body();
+
+        throw new RuntimeException(
+            'Resend could not send the verification code. HTTP '
+            . $response->status()
+            . '. '
+            . $this->summariseMailProviderError((string) $message)
+        );
+    }
+
+    private function summariseMailProviderError(string $message): string
+    {
+        $message = trim((string) preg_replace('/\s+/', ' ', $message));
+
+        if ($message === '') {
+            return 'Check RESEND_KEY and MAIL_FROM_ADDRESS.';
+        }
+
+        return mb_substr($message, 0, 220);
     }
 
     private function otpMailer(): string
