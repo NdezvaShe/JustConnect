@@ -6,7 +6,8 @@ WORKDIR /app
 
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git unzip \
+    && apt-get install -y --no-install-recommends git libonig-dev libpq-dev libzip-dev unzip \
+    && docker-php-ext-install mbstring pdo_mysql pdo_pgsql pdo_sqlite zip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY composer.json composer.lock ./
