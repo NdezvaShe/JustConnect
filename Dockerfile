@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git libonig-dev libpq-dev libzip-dev unzip \
+    && apt-get install -y --no-install-recommends git libonig-dev libpq-dev libsqlite3-dev libzip-dev unzip \
     && docker-php-ext-install mbstring pdo_mysql pdo_pgsql pdo_sqlite zip \
     && rm -rf /var/lib/apt/lists/*
 
@@ -25,7 +25,7 @@ RUN composer dump-autoload --optimize --no-dev --no-scripts
 FROM php:8.4-apache
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libonig-dev libpq-dev libzip-dev unzip \
+    && apt-get install -y --no-install-recommends libonig-dev libpq-dev libsqlite3-dev libzip-dev unzip \
     && docker-php-ext-install mbstring pdo_mysql pdo_pgsql pdo_sqlite zip \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
