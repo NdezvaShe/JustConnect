@@ -359,6 +359,12 @@ class AuthController extends Controller
 
     protected function sendOtpMail(string $email, string $otp): void
     {
+        if ($this->usesSendGridOtpMailer()) {
+            $this->sendOtpViaSendGrid($email, $otp);
+
+            return;
+        }
+
         if ($this->usesResendOtpMailer()) {
             $this->sendOtpViaResend($email, $otp);
 
@@ -401,6 +407,75 @@ class AuthController extends Controller
     private function usesResendOtpMailer(): bool
     {
         return in_array(strtolower((string) config('auth.otp_mailer')), ['resend', 'resend_api'], true);
+    }
+
+    private function usesSendGridOtpMailer(): bool
+    {
+        return in_array(strtolower((string) config('auth.otp_mailer')), ['sendgrid', 'sendgrid_api'], true);
+    }
+
+    private function sendOtpViaSendGrid(string $email, string $otp): void
+    {
+        $key = trim((string) config('services.sendgrid.key'));
+
+        if ($key === '') {
+            throw new RuntimeException('Email delivery is not configured. Missing SENDGRID_API_KEY.');
+        }
+
+        $fromAddress = trim((string) config('mail.from.address'));
+        $fromName = trim((string) config('mail.from.name'));
+
+        if ($fromAddress === '' || $fromAddress === 'hello@example.com') {
+            throw new RuntimeException('Email delivery is not configured. Missing MAIL_FROM_ADDRESS.');
+        }
+
+        $html = view('emails.otp', ['otp' => $otp])->render();
+
+        try {
+            $response = Http::timeout(20)
+                ->withToken($key)
+                ->acceptJson()
+                ->asJson()
+                ->post('https://api.sendgrid.com/v3/mail/send', [
+                    'personalizations' => [
+                        [
+                            'to' => [
+                                ['email' => $email],
+                            ],
+                        ],
+                    ],
+                    'from' => array_filter([
+                        'email' => $fromAddress,
+                        'name' => $fromName !== '' ? $fromName : null,
+                    ]),
+                    'subject' => 'Your JustConnect verification code',
+                    'content' => [
+                        [
+                            'type' => 'text/plain',
+                            'value' => "Your JustConnect verification code is {$otp}. It expires in 10 minutes.",
+                        ],
+                        [
+                            'type' => 'text/html',
+                            'value' => $html,
+                        ],
+                    ],
+                ]);
+        } catch (Throwable $e) {
+            throw new RuntimeException('SendGrid email API could not be reached. ' . $e->getMessage(), 0, $e);
+        }
+
+        if ($response->successful()) {
+            return;
+        }
+
+        $message = $response->json('errors.0.message') ?: $response->body();
+
+        throw new RuntimeException(
+            'SendGrid could not send the verification code. HTTP '
+            . $response->status()
+            . '. '
+            . $this->summariseMailProviderError((string) $message)
+        );
     }
 
     private function sendOtpViaResend(string $email, string $otp): void

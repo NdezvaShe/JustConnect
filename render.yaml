@@ -35,7 +35,9 @@ services:
       - key: MAIL_MAILER
         value: smtp
       - key: OTP_MAILER
-        value: smtp
+        value: sendgrid_api
+      - key: SENDGRID_API_KEY
+        sync: false
       - key: MAIL_HOST
         value: smtp.sendgrid.net
       - key: MAIL_PORT
