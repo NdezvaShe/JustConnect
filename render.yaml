@@ -33,11 +33,19 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: MAIL_MAILER
-        value: log
+        value: smtp
       - key: OTP_MAILER
-        value: resend
-      - key: RESEND_API_KEY
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp.sendgrid.net
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        value: apikey
+      - key: MAIL_PASSWORD
         sync: false
+      - key: MAIL_ENCRYPTION
+        value: tls
       - key: MAIL_FROM_ADDRESS
         sync: false
       - key: MAIL_FROM_NAME
