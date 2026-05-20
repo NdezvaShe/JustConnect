@@ -1,0 +1,52 @@
+services:
+  - type: web
+    name: justconnect-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    autoDeployTrigger: commit
+    envVars:
+      - key: APP_NAME
+        value: JustConnect
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        value: https://justconnect-api.onrender.com
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: justconnect-db
+          property: connectionString
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: PREFERRED_AI
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MAIL_MAILER
+        value: log
+      - key: OTP_MAILER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: JustConnect
+      - key: REQUIRE_REGISTRATION_EMAIL_VERIFICATION
+        value: "true"
+      - key: SEED_DEMO_USER
+        value: "false"
+
+databases:
+  - name: justconnect-db
+    plan: free
